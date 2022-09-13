@@ -313,5 +313,6 @@ unsigned int Level_Data::getMaterialIndex(unsigned int _meshIndex)
 
 unsigned int Level_Data::getBatch(std::string _in)
 {
-	// get the batch for the render loop
+	
+	return 0;
 }

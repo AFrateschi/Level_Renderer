@@ -327,17 +327,24 @@ public:
 			data.view = view;
 			//data.PVM = proj * view * LevelData.worldMatrix[i];
 
-			data.material = LevelData.materials[modelIndex];
+			for (int j = 0; j < LevelData.batches.size(); j++)
+			{
+				if (LevelData.model[i] == LevelData.batches[j].modelName)
+				{
+					data.material = LevelData.materials[LevelData.getMaterialIndex(j)];
 
-			glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-			void* bufferPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-			void* dataPtr = &data;
+					glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+					void* bufferPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+					void* dataPtr = &data;
 
-			memcpy(bufferPtr, dataPtr, blockSize);
+					memcpy(bufferPtr, dataPtr, blockSize);
 
-			glDrawElements(GL_TRIANGLES, LevelData.batches[modelIndex].indexCount, GL_UNSIGNED_INT, (void*)((LevelData.batches[modelIndex].indexOffset) * sizeof(unsigned int)));
+					glDrawElements(GL_TRIANGLES, LevelData.batches[j].indexCount, GL_UNSIGNED_INT, (void*)((LevelData.batches[j].indexOffset) * sizeof(unsigned int)));
+					
+					glUnmapBuffer(GL_UNIFORM_BUFFER);
+				}
+			}
 
-			glUnmapBuffer(GL_UNIFORM_BUFFER);
 		}
 
 		// some video cards(cough Intel) need this set back to zero or they won't display

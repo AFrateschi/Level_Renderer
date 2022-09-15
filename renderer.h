@@ -9,7 +9,7 @@
 #include "Level_Data.h"
 
 const char* vertexShaderSource = R"(
-#version 330 // GLSL 3.30
+#version 420 // GLSL 3.30
 // an ultra simple glsl vertex shader
 struct OBJ_ATTRIBUTES
 {
@@ -24,7 +24,7 @@ struct OBJ_ATTRIBUTES
 	vec3		Ke;			// emissive reflectivity
 	uint		illum;		// illumination model
 };
-layout(std140) uniform UBO_DATA
+layout(std140, binding = 0) uniform UBO_DATA
 {
 	vec4 sunDirection;
 	vec4 sunColor;
@@ -32,7 +32,7 @@ layout(std140) uniform UBO_DATA
 	mat4 view;
 	mat4 pers;
 	OBJ_ATTRIBUTES material;
-	vec3 viewPos;
+	vec4 viewPos;
 };
 
 layout(location = 0) in vec3 local_pos;
@@ -46,16 +46,17 @@ out vec3 frag;	// vec from camera to fragment
 void main()
 {
 
-	gl_Position = (pers * view * model) * vec4(local_pos.x, local_pos.y, local_pos.z, 1.0f);
+	gl_Position = (pers * view * model) * vec4(local_pos, 1.0f);
 
+	vec4 worldPos = model * vec4(local_pos, 1.0f);
 	norm = mat3(model) * local_nrm;
 	light = vec3(sunDirection);
-	frag = mat3(model * view) * local_pos;
+	frag = worldPos.xyz;
 }
 )";
 // Simple Fragment Shader
 const char* fragmentShaderSource = R"(
-#version 330 // GLSL 3.30
+#version 420 // GLSL 3.30
 // an ultra simple glsl fragment shader
 
 struct OBJ_ATTRIBUTES
@@ -71,7 +72,7 @@ struct OBJ_ATTRIBUTES
 	vec3		Ke;			// emissive reflectivity
 	uint		illum;		// illumination model
 };
-layout(std140) uniform UBO_DATA
+layout(std140, binding = 0) uniform UBO_DATA
 {
 	vec4 sunDirection;
 	vec4 sunColor;
@@ -79,12 +80,14 @@ layout(std140) uniform UBO_DATA
 	mat4 view;
 	mat4 pers;
 	OBJ_ATTRIBUTES material;
-	vec3 viewPos;
+	vec4 viewPos;
 };
 
 in vec3 norm;
 in vec3 light;
 in vec3 frag;
+
+out vec4 outColor;
 
 void main() 
 {	
@@ -92,20 +95,23 @@ void main()
 	vec3 fNorm = normalize(norm);
 	vec3 fLight = normalize(light);
 	// inverse becomes vector from fragment to camera
-	vec3 fFrag = normalize(-frag);
-	vec3 halfVec = normalize(fLight + fFrag);
+	//vec3 fFrag = normalize(frag);
 
 	vec4 color = vec4(material.Kd, 1.0f);
-	float ratio = max(dot(fNorm, fLight), 0.0);
+	float ratio = max(dot(fNorm, -fLight), 0.0);
 	// add ambient light to brighten overall image slightly
-	ratio = ratio + 0.25;
+	//ratio = ratio + 0.25;
 	vec4 diffuse = ratio * sunColor;
+	vec4 ambient = vec4(0.25f, 0.25f, 0.35f, 0.0f);
 
+	vec3 vp = viewPos.xyz;
+	
+	vec3 viewDir = normalize(vec3(0.75f, 0.25f, 1.5f) - frag);
+	vec3 halfVec = normalize(-fLight + viewDir);
 	float intensity = pow(max(dot(fNorm, halfVec), 0.0), material.Ns);
-	vec4 specular = intensity * sunColor;
+	vec4 specular = intensity * vec4(material.Ks, 1);
 
-	//gl_FragColor = (diffuse + specular) * color;
-	gl_FragColor = color;	
+	outColor = clamp(diffuse + ambient, 0.0f, 1.0f) * color + specular;	
 }
 )";
 // Used to print debug infomation from OpenGL, pulled straight from the official OpenGL wiki.
@@ -133,7 +139,7 @@ struct UBO_DATA
 	glm::mat4 view;
 	glm::mat4 pers;
 	MyAttrib material;
-	glm::vec3 viewPos;
+	glm::vec4 viewPos;
 };
 // Creation, Rendering & Cleanup
 class Renderer
@@ -301,9 +307,9 @@ public:
 		glUniformBlockBinding(shaderExecutable, uboLoc, blockIndex);
 
 		// draw text
-		data.sunDirection = { -1.0f, -1.0f, 2.0f, 0.0f };
+		data.sunDirection = { 2.0f, -5.0f, 2.0f, 0.0f };
 		data.sunColor = { 0.50f, 0.50f, 0.70f, 1.0f };
-		data.viewPos = eye;
+		data.viewPos = { eye.x, eye.y, eye.z, 0.0f };
 		
 		for (int i = 0; i < LevelData.modelCount; i++)
 		{

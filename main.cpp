@@ -29,7 +29,7 @@ int main()
 	if (+win.Create(0, 0, 800, 600, GWindowStyle::WINDOWEDBORDERED))
 	{
 		
-		win.SetWindowName("Andrew Frateschi Assignment 1");
+		win.SetWindowName("Andrew Frateschi Renderer Project");
 		float clr[] = { 25/255.0f, 25/255.0f, 25/255.0f, 1 }; // TODO: Part 1a { 48/255.0f, 90/255.0f, 150/255.0f, 1 }
 		msgs.Create([&](const GW::GEvent& e) {
 			GW::SYSTEM::GWindow::Events q;

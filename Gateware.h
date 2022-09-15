@@ -54333,11 +54333,11 @@ namespace GW
 				ReleaseDC(static_cast<HWND>(UWH.window), hdc);
 				wglDeleteContext(OGLcontext);
 
-				// Create an OpenGL 3.0 Context //
+				// Create an OpenGL 3.2 Context //
 				int contextAttributes[] =
 				{
 					WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-					WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+					WGL_CONTEXT_MINOR_VERSION_ARB, 2,
 					WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
 					0
 				};

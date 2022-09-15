@@ -175,7 +175,7 @@ public:
 		GameLevel
 		FloorTest
 		*/
-		LevelData.loadLevel("FloorTest");
+		LevelData.loadLevel("RoomTest");
 
 		win = _win;
 		ogl = _ogl;
@@ -185,7 +185,7 @@ public:
 
 		eye = { 0.75f, 0.25f, 1.5f };
 		orient = { 0.15f, 0.75f, 0.0f };
-		up = { 0.0f, 1.0f, 0.0f };
+		up = { 0.0f, -1.0f, 0.0f };
 		view = glm::lookAt(eye, orient, up);
 
 		float ar;
@@ -210,33 +210,22 @@ public:
 		//std::vector<glm::vec3> verts[3];
 		for (int i = 0; i < LevelData.vertexCount; i++)
 		{
-			//verts[0].push_back(LevelData.vertices[i].pos);
-
-			//verts[1].push_back(LevelData.vertices[i].uvw);
-
-			//verts[2].push_back(LevelData.vertices[i].nrm);
-
 			verts[i][0] = LevelData.vertices[i].pos;
 			verts[i][1] = LevelData.vertices[i].uvw;
 			verts[i][2] = LevelData.vertices[i].nrm;
-
-			//verts[i][0].x = FSLogo_vertices[i].pos.x;
-			//verts[i][0].y = FSLogo_vertices[i].pos.y;
-			//verts[i][0].z = FSLogo_vertices[i].pos.z;
-
-			//verts[i][1].x = FSLogo_vertices[i].uvw.x;
-			//verts[i][1].y = FSLogo_vertices[i].uvw.y;
-			//verts[i][1].z = FSLogo_vertices[i].uvw.z;
-
-			//verts[i][2].x = FSLogo_vertices[i].nrm.x;
-			//verts[i][2].y = FSLogo_vertices[i].nrm.y;
-			//verts[i][2].z = FSLogo_vertices[i].nrm.z;
 		}
 		glGenVertexArrays(1, &vertexArray);
 		glGenBuffers(1, &vertexBufferObject);
 		glBindVertexArray(vertexArray);
 		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+		glEnableVertexAttribArray(2);
 
 		std::vector<unsigned int> index;
 		for (int i = 0; i < LevelData.indexCount; i++)
@@ -247,6 +236,10 @@ public:
 		glGenBuffers(1, &indexBufferObject);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index.size() * sizeof(unsigned int), &index[0], GL_STATIC_DRAW);
+		// unbind
+		glBindVertexArray(0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 		// Create Vertex Shader
 		vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -289,26 +282,19 @@ public:
 		glGetActiveUniformBlockiv(shaderExecutable, blockIndex, GL_UNIFORM_BLOCK_DATA_SIZE, &blockSize);
 
 		glGenBuffers(1, &UBO);
-		glBindBufferBase(GL_UNIFORM_BUFFER, blockIndex, UBO);
-		glBufferData(GL_UNIFORM_BUFFER, blockSize, nullptr, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_UNIFORM_BUFFER, UBO);
+		glBufferData(GL_UNIFORM_BUFFER, sizeof(UBO_DATA), &data, GL_DYNAMIC_DRAW);
+		glBindBufferBase(GL_UNIFORM_BUFFER, 0, UBO);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
 	void Render()
 	{
 		// setup the pipeline
 
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
-		glEnableVertexAttribArray(1);
-		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
 		glUseProgram(shaderExecutable);
-		// now we can draw
 		glBindVertexArray(vertexArray);
-		glUseProgram(shaderExecutable);
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
+		// now we can draw
 
 		GLuint uboLoc = glGetUniformBlockIndex(shaderExecutable, "UBO_DATA");
 		glUniformBlockBinding(shaderExecutable, uboLoc, blockIndex);
@@ -317,15 +303,13 @@ public:
 		data.sunDirection = { -1.0f, -1.0f, 2.0f, 0.0f };
 		data.sunColor = { 0.50f, 0.50f, 0.70f, 1.0f };
 		data.viewPos = eye;
-		//glm::mat4 rotMat = glm::rotate(world[1], float(duration.count() * (M_PI / 1440.0f)), glm::vec3(0.0f, 1.0f, 0.0f));
-
+		
 		for (int i = 0; i < LevelData.modelCount; i++)
 		{
 			unsigned int modelIndex = LevelData.getModelIndex(LevelData.model[i]);
 			data.model = LevelData.worldMatrix[i];
 			data.pers = proj;
 			data.view = view;
-			//data.PVM = proj * view * LevelData.worldMatrix[i];
 
 			for (int j = 0; j < LevelData.batches.size(); j++)
 			{
@@ -334,14 +318,10 @@ public:
 					data.material = LevelData.materials[LevelData.getMaterialIndex(j)];
 
 					glBindBuffer(GL_UNIFORM_BUFFER, UBO);
-					void* bufferPtr = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
-					void* dataPtr = &data;
-
-					memcpy(bufferPtr, dataPtr, blockSize);
+					glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(data), (void*)&data);
 
 					glDrawElements(GL_TRIANGLES, LevelData.batches[j].indexCount, GL_UNSIGNED_INT, (void*)((LevelData.batches[j].indexOffset) * sizeof(unsigned int)));
 					
-					glUnmapBuffer(GL_UNIFORM_BUFFER);
 				}
 			}
 
@@ -565,6 +545,7 @@ private:
 	PFNGLUNMAPBUFFERPROC				glUnmapBuffer = nullptr;
 	PFNGLUNIFORMBLOCKBINDINGPROC		glUniformBlockBinding = nullptr;
 	PFNGLUNIFORM4FVPROC					glUniform4fv = nullptr;
+	PFNGLBUFFERSUBDATAPROC				glBufferSubData = nullptr;
 
 	// Modern OpenGL API functions need to be queried
 	void LoadExtensions()
@@ -609,5 +590,6 @@ private:
 		ogl.QueryExtensionFunction(nullptr, "glUnmapBuffer", (void**)&glUnmapBuffer);
 		ogl.QueryExtensionFunction(nullptr, "glUniformBlockBinding", (void**)&glUniformBlockBinding);
 		ogl.QueryExtensionFunction(nullptr, "glUniform4fv", (void**)&glUniform4fv);
+		ogl.QueryExtensionFunction(nullptr, "glBufferSubData", (void**)&glBufferSubData);
 	}
 };

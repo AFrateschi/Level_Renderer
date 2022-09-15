@@ -1,5 +1,10 @@
 #pragma once
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/transform.hpp>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -175,6 +180,18 @@ void Level_Data::loadLevel(std::string _in)
 					worldData[8], worldData[9], worldData[10], worldData[11],
 					worldData[12], worldData[13], worldData[14], worldData[15],
 				};
+				//glm::mat4 worldIn =								// makes a temp matrix of our data input
+				//{
+				//	worldData[0], worldData[2], -worldData[1], worldData[3],
+				//	worldData[4], worldData[6], -worldData[5], worldData[7],
+				//	worldData[8], worldData[10], -worldData[9], worldData[11],
+				//	worldData[12], worldData[14], -worldData[13], worldData[15],
+				//};
+				
+				//glm::transpose(worldIn);
+
+
+
 				worldMatrix.push_back(worldIn);					// push matrix to our vector
 				modelCount++;
 			}

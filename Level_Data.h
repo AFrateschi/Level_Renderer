@@ -189,8 +189,8 @@ void Level_Data::loadLevel(std::string _in)
 				//};
 				
 				//glm::transpose(worldIn);
-
-
+				
+				//worldIn = glm::rotate(worldIn, float(180.0f * (M_PI / 180.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
 
 				worldMatrix.push_back(worldIn);					// push matrix to our vector
 				modelCount++;

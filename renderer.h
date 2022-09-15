@@ -152,8 +152,8 @@ class Renderer
 	GLuint shaderExecutable = 0;
 	glm::mat4 world[2], view, proj;
 	glm::vec3 eye, orient, up, right;
-	float pitch = 2.29353057f;
-	float yaw = 3.37036156;
+	float pitch = 0.0f;
+	float yaw = 0.0f;
 	std::chrono::steady_clock::time_point startRend;	// for world mat rotation
 	std::chrono::steady_clock::time_point start;
 	GW::INPUT::GInput input;
@@ -172,6 +172,7 @@ public:
 	{
 		/*
 		box test
+		RoomTest
 		GameLevel
 		FloorTest
 		*/
@@ -183,9 +184,9 @@ public:
 		controller.Create();
 		input.Create(_win);
 
-		eye = { 0.75f, 0.25f, 1.5f };
-		orient = { 0.15f, 0.75f, 0.0f };
-		up = { 0.0f, -1.0f, 0.0f };
+		eye = { 1.15f, 2.0f, 1.5f };
+		orient = { -0.65f, 0.15f, -0.75f };
+		up = { 0.0f, 1.0f, 0.0f };
 		view = glm::lookAt(eye, orient, up);
 
 		float ar;
@@ -469,6 +470,7 @@ public:
 			up = glm::cross(right, orient);
 
 			std::cout << "Orient: X = " << orient.x << ", Y = " << orient.y << ", Z = " << orient.z << std::endl;
+			std::cout << "pitch: " << pitch << "\nyaw: " << yaw << std::endl;
 		}
 
 		if (deltaZ[3] != 0 || deltaX[3] != 0 || deltaY[4] != 0)
@@ -489,6 +491,7 @@ public:
 				std::cout << "move Y: " << deltaY[4] << std::endl;
 				eye += up * deltaY[4];
 			}
+			std::cout << "Position: X = " << eye.x << " Y = " << eye.y << " Z = " << eye.z << std::endl;
 		}
 
 		view = glm::lookAt(eye, (eye + orient), up);

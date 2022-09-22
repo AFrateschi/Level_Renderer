@@ -77,6 +77,7 @@ struct PointLight
 	glm::vec3 diffuse;
 	float quad;
 	glm::vec3 specular;
+	float padding;
 };
 struct WorldMatrix
 {
@@ -187,9 +188,15 @@ void Level_Data::loadLevel(std::string _in)
 
 				light.ambient = flame / 16.0f;
 				light.diffuse = flame;
-				light.specular = {1.0f, 1.0f, 1.0f};
+				light.specular = { 1.0f, 1.0f, 1.0f };
 
-				light.cons = 1.0f;
+				/*
+				light.ambient = { 0.05f, 0.05f, 0.05f };
+				light.diffuse = { 0.8f, 0.8f, 0.8f };
+				light.specular = { 1.0f, 1.0f, 1.0f };
+				*/
+
+				light.cons = 0.5f;
 				light.line = 0.09f;
 				light.quad = 0.032f;
 

@@ -12,6 +12,7 @@
 const char* vertexShaderSource = R"(
 #version 420 // GLSL 3.30
 // an ultra simple glsl vertex shader
+#define PLIGHT_COUNT 5
 struct OBJ_ATTRIBUTES
 {
 	vec3		Kd;			// diffuse reflectivity
@@ -25,15 +26,25 @@ struct OBJ_ATTRIBUTES
 	vec3		Ke;			// emissive reflectivity
 	uint		illum;		// illumination model
 };
+struct PointLight
+{
+	vec3 pos;
+	float cons;
+	vec3 ambient;
+	float line;
+	vec3 diffuse;
+	float quad;
+	vec3 specular;
+	float padding;
+};
 layout(std140, binding = 0) uniform UBO_DATA
 {
-	vec4 sunDirection;
-	vec4 sunColor;
 	mat4 model;
 	mat4 view;
 	mat4 pers;
 	OBJ_ATTRIBUTES material;
 	vec4 viewPos;
+	PointLight pointLights[PLIGHT_COUNT];
 };
 
 layout(location = 0) in vec3 local_pos;
@@ -41,7 +52,6 @@ layout(location = 1) in vec3 local_uvw;
 layout(location = 2) in vec3 local_nrm;
 
 out vec3 norm;	// output normal
-out vec3 light;	// output of light, redundant?
 out vec3 frag;	// vec from camera to fragment
 
 void main()
@@ -51,7 +61,6 @@ void main()
 
 	vec4 worldPos = model * vec4(local_pos, 1.0f);
 	norm = mat3(model) * local_nrm;
-	light = vec3(sunDirection);
 	frag = worldPos.xyz;
 }
 )";
@@ -59,7 +68,7 @@ void main()
 const char* fragmentShaderSource = R"(
 #version 420 // GLSL 3.30
 // an ultra simple glsl fragment shader
-
+#define PLIGHT_COUNT 5
 struct OBJ_ATTRIBUTES
 {
 	vec3		Kd;			// diffuse reflectivity
@@ -73,16 +82,30 @@ struct OBJ_ATTRIBUTES
 	vec3		Ke;			// emissive reflectivity
 	uint		illum;		// illumination model
 };
+struct PointLight
+{
+	vec3 pos;
+	float cons;
+	vec3 ambient;
+	float line;
+	vec3 diffuse;
+	float quad;
+	vec3 specular;
+	float padding;
+};
+
+#define PLIGHT_COUNT 5
+
 layout(std140, binding = 0) uniform UBO_DATA
 {
-	vec4 sunDirection;
-	vec4 sunColor;
 	mat4 model;
 	mat4 view;
 	mat4 pers;
 	OBJ_ATTRIBUTES material;
 	vec4 viewPos;
+	PointLight pointLights[PLIGHT_COUNT];
 };
+
 
 in vec3 norm;
 in vec3 light;
@@ -90,28 +113,44 @@ in vec3 frag;
 
 out vec4 outColor;
 
+vec3 CalcPointLight(PointLight light, vec3 norm, vec3 fragPos, vec3 viewDir)
+{
+	vec3 lightDir = normalize(light.pos - fragPos);
+
+	float diff = max(dot(norm, lightDir), 0.0f);
+	
+	vec3 halfvec = normalize(-light.pos + viewDir);
+
+	vec3 reflectDir = reflect(-lightDir, norm);
+	float spec = pow(max(dot(norm, halfvec), 0.0f), material.Ns);
+
+	float dist = length(light.pos - fragPos);
+	float attenuation = 1.0f / (light.cons + light.line * dist + light.quad * (dist * dist));
+
+	vec3 ambient = light.ambient * material.Kd;
+	vec3 diffuse = light.diffuse * diff * material.Kd;
+	vec3 specular = light.specular * spec * material.Ks;
+	ambient *= attenuation;
+	diffuse *= attenuation;
+	specular *= attenuation;
+
+	return (ambient + diffuse + (specular * 0.01f));
+}
+
 void main() 
 {	
 	// normalize in vectors
 	vec3 fNorm = normalize(norm);
-	vec3 fLight = normalize(light);
-	// inverse becomes vector from fragment to camera
-	//vec3 fFrag = normalize(frag);
-
-	vec4 color = vec4(material.Kd, 1.0f);
-	float ratio = max(dot(fNorm, -fLight), 0.0);
-	// add ambient light to brighten overall image slightly
-	//ratio = ratio + 0.25;
-	vec4 diffuse = ratio * sunColor;
-	vec4 ambient = vec4(0.25f, 0.25f, 0.35f, 0.0f);
-	
 	vec3 viewDir = normalize(vec3(viewPos) - frag);
-	vec3 halfVec = normalize(-fLight + viewDir);
-	float intensity = pow(max(dot(fNorm, halfVec), 0.0), material.Ns);
-	vec4 specular = intensity * vec4(material.Ks, 1);
 
+	vec3 result = {0.15f, 0.15f, 0.15f};
 
-	outColor = clamp(diffuse + ambient, 0.0f, 1.0f) * color + specular;	
+	for (int i = 0; i < PLIGHT_COUNT; i++)
+	{
+		result += CalcPointLight(pointLights[i], fNorm, frag, viewDir);
+	}
+
+	outColor = vec4(result, 1.0f);
 }
 )";
 // Used to print debug infomation from OpenGL, pulled straight from the official OpenGL wiki.
@@ -134,13 +173,14 @@ struct UBO_DATA
 */
 struct UBO_DATA
 {
-	glm::vec4 sunDirection, sunColor;
 	glm::mat4 model;
 	glm::mat4 view;
 	glm::mat4 pers;
 	MyAttrib material;
 	glm::vec4 viewPos;
+	PointLight pointLights[PLIGHT_COUNT];
 };
+
 
 // Creation, Rendering & Cleanup
 class Renderer
@@ -216,6 +256,11 @@ public:
 		glDebugMessageCallback(MessageCallback, 0);
 #endif
 
+		for (int i = 0; i < PLIGHT_COUNT; i++)
+		{
+			data.pointLights[i] = LevelData.lights[i];
+		}
+
 		// Create Vertex Buffer
 		glm::vec3 verts[11000][3] = {}; // 0 = pos 1 = uvw 2 = nrm
 		//std::vector<glm::vec3> verts[3];
@@ -237,8 +282,6 @@ public:
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
-
-
 
 		std::vector<unsigned int> index;
 		for (int i = 0; i < LevelData.indexCount; i++)
@@ -313,8 +356,8 @@ public:
 		glUniformBlockBinding(shaderExecutable, uboLoc, blockIndex);
 
 		// draw text
-		data.sunDirection = { 2.0f, -5.0f, 2.0f, 0.0f };
-		data.sunColor = { 0.50f, 0.50f, 0.70f, 1.0f };
+		//data.sunDirection = { 2.0f, -5.0f, 2.0f, 0.0f };
+		//data.sunColor = { 0.50f, 0.50f, 0.70f, 1.0f };
 		data.viewPos = { eye.x, eye.y, eye.z, 0.0f };
 		
 		for (int i = 0; i < LevelData.modelCount; i++)

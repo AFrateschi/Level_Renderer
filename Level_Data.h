@@ -93,6 +93,8 @@ public:
 	MyVertex vertexConvert(H2B::VERTEX _in);
 	glm::vec3 vectorConvert(H2B::VECTOR _in);
 	WorldMatrix ExtractMatrix(std::fstream &_file, std::string _line);
+	float ExtractLightFloat(std::fstream& _file, std::string _line);
+	glm::vec3 ExtractLightVec(std::fstream& _file, std::string _line);
 	unsigned int getModelIndex(std::string _in);
 	unsigned int getMaterialIndex(unsigned int _batchIndex);
 	unsigned int getBatch(std::string _in);
@@ -183,12 +185,24 @@ void Level_Data::loadLevel(std::string _in)
 				worldData = ExtractMatrix(file, line);
 
 				light.pos = glm::vec3{ worldData.data[12], worldData.data[13], worldData.data[14] };
+	
+				light.cons = ExtractLightFloat(file, line);
 
-				glm::vec3 flame = { 226.0f / 255.0f, 88.0f / 255.0f, 34.0f / 255.0f };
+				light.line = ExtractLightFloat(file, line);
 
-				light.ambient = flame / 16.0f;
-				light.diffuse = flame;
-				light.specular = { 1.0f, 1.0f, 1.0f };
+				light.quad = ExtractLightFloat(file, line);
+
+				light.ambient = ExtractLightVec(file, line);
+
+				light.diffuse = ExtractLightVec(file, line);
+
+				light.specular = ExtractLightVec(file, line);
+
+				//glm::vec3 flame = { 226.0f / 255.0f, 88.0f / 255.0f, 34.0f / 255.0f };
+
+				//light.ambient = flame / 16.0f;
+				//light.diffuse = flame;
+				//light.specular = { 1.0f, 1.0f, 1.0f };
 
 				/*
 				light.ambient = { 0.05f, 0.05f, 0.05f };
@@ -196,9 +210,9 @@ void Level_Data::loadLevel(std::string _in)
 				light.specular = { 1.0f, 1.0f, 1.0f };
 				*/
 
-				light.cons = 0.5f;
-				light.line = 0.09f;
-				light.quad = 0.032f;
+				//light.cons = 0.5f;
+				//light.line = 0.09f;
+				//light.quad = 0.032f;
 
 				lights.push_back(light);
 			}
@@ -359,6 +373,32 @@ WorldMatrix Level_Data::ExtractMatrix(std::fstream &_file, std::string _line)
 	}
 
 	return worldIn;
+}
+
+float Level_Data::ExtractLightFloat(std::fstream& _file, std::string _line)
+{
+	std::getline(_file, _line);
+	std::cout << _line << std::endl;
+	std::getline(_file, _line);
+	std::cout << _line << std::endl;
+	return std::stof(_line);
+}
+
+glm::vec3 Level_Data::ExtractLightVec(std::fstream &_file, std::string _line)
+{
+	float temp[3] = { 0.0f, 0.0f, 0.0f };
+
+	std::getline(_file, _line);					// get and print context
+	std::cout << _line << std::endl;
+
+	for (int i = 0; i < 3; i++)
+	{
+		std::getline(_file, _line);
+		std::cout << _line << std::endl;
+		temp[i] = std::stof(_line);
+	}
+
+	return glm::vec3(temp[0], temp[1], temp[3]);
 }
 
 unsigned int Level_Data::getModelIndex(std::string _in)

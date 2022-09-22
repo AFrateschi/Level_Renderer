@@ -7,6 +7,7 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/transform.hpp>
 #include "Level_Data.h"
+#define PLIGHT_COUNT 5
 
 const char* vertexShaderSource = R"(
 #version 420 // GLSL 3.30
@@ -103,13 +104,12 @@ void main()
 	//ratio = ratio + 0.25;
 	vec4 diffuse = ratio * sunColor;
 	vec4 ambient = vec4(0.25f, 0.25f, 0.35f, 0.0f);
-
-	vec3 vp = viewPos.xyz;
 	
-	vec3 viewDir = normalize(vec3(0.75f, 0.25f, 1.5f) - frag);
+	vec3 viewDir = normalize(vec3(viewPos) - frag);
 	vec3 halfVec = normalize(-fLight + viewDir);
 	float intensity = pow(max(dot(fNorm, halfVec), 0.0), material.Ns);
 	vec4 specular = intensity * vec4(material.Ks, 1);
+
 
 	outColor = clamp(diffuse + ambient, 0.0f, 1.0f) * color + specular;	
 }
@@ -141,6 +141,7 @@ struct UBO_DATA
 	MyAttrib material;
 	glm::vec4 viewPos;
 };
+
 // Creation, Rendering & Cleanup
 class Renderer
 {
@@ -156,6 +157,7 @@ class Renderer
 	GLuint vertexShader = 0;
 	GLuint fragmentShader = 0;
 	GLuint shaderExecutable = 0;
+	GLuint lightUniform = 0;
 	glm::mat4 world[2], view, proj;
 	glm::vec3 eye, orient, up, right;
 	float pitch = 0.0f;
@@ -181,8 +183,10 @@ public:
 		RoomTest
 		GameLevel
 		FloorTest
+		AssetTest
+		Collapse
 		*/
-		LevelData.loadLevel("RoomTest");
+		LevelData.loadLevel("Collapse");
 
 		win = _win;
 		ogl = _ogl;
@@ -213,7 +217,7 @@ public:
 #endif
 
 		// Create Vertex Buffer
-		glm::vec3 verts[10000][3] = {}; // 0 = pos 1 = uvw 2 = nrm
+		glm::vec3 verts[11000][3] = {}; // 0 = pos 1 = uvw 2 = nrm
 		//std::vector<glm::vec3> verts[3];
 		for (int i = 0; i < LevelData.vertexCount; i++)
 		{
@@ -233,6 +237,8 @@ public:
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 		glEnableVertexAttribArray(2);
+
+
 
 		std::vector<unsigned int> index;
 		for (int i = 0; i < LevelData.indexCount; i++)
@@ -350,7 +356,7 @@ public:
 		controller.IsConnected(0, conConnected);
 
 		// a modifier for movement speed, multipled by the amount of time since the last frame update
-		const float moveSpeed = 0.0015f;
+		const float moveSpeed = 0.015f;
 		float curSpeed = moveSpeed * duration.count();
 
 		// using arrays to store movement inputs, final input will be the last index of each array

@@ -68,6 +68,20 @@ struct MODELDATA
 
 	std::string modelName;
 };
+struct PointLight
+{
+	glm::vec3 pos;
+	float cons;
+	glm::vec3 ambient;
+	float line;
+	glm::vec3 diffuse;
+	float quad;
+	glm::vec3 specular;
+};
+struct WorldMatrix
+{
+	float data[16] = {0.0f};
+};
 class Level_Data
 {
 
@@ -77,6 +91,7 @@ public:
 	void loadLevel(std::string _in);
 	MyVertex vertexConvert(H2B::VERTEX _in);
 	glm::vec3 vectorConvert(H2B::VECTOR _in);
+	WorldMatrix ExtractMatrix(std::fstream &_file, std::string _line);
 	unsigned int getModelIndex(std::string _in);
 	unsigned int getMaterialIndex(unsigned int _batchIndex);
 	unsigned int getBatch(std::string _in);
@@ -97,6 +112,7 @@ public:
 	std::vector<unsigned int> indices;	// move to level data, 1 vector for all index data
 	std::vector<MyAttrib> materials;	// move to level data, 1 vector for all material data
 	std::vector<MyBatch> batches;
+	std::vector<PointLight> lights;
 
 private:
 
@@ -123,7 +139,7 @@ void Level_Data::loadLevel(std::string _in)
 			if (line == "MESH")
 			{
 				int index = 0;									// declare locals
-				float worldData[16] = { 0.0f };
+				WorldMatrix worldData{};
 				std::string modelName;
 
 				std::cout << line << std::endl;
@@ -139,61 +155,45 @@ void Level_Data::loadLevel(std::string _in)
 
 				std::cout << line << std::endl;
 				std::getline(file, line);						// get first line of matrix
-				for (int i = 0; i < 4; i++)
-				{
-					line.erase(0, 13);							// trim matrix to fit
-					
-					size_t check = line.find_first_not_of(' ');
 
-					if (check != 0)
-						line.erase(0, check);
+				worldData = ExtractMatrix(file, line);
 
-					check = line.find_last_of(')');
-					line.erase(check, line.size() - 1);
-
-					//if (i != 3)
-					//	line.erase(31, 1);
-					//else
-					//	line.erase(31, 2);
-
-					std::stringstream temp(line);				// create a string stream to go through current line
-					while (temp.good())
-					{											
-						std::string result;
-						getline(temp, result, ',');				// gets each number deliminated by comma
-						check = result.find_first_not_of(' ');
-						if (check != 0)
-							result.erase(0, check);				// trims off excess whitesspace from number
-						
-						worldData[index] = std::stof(result);	// set the number to out local temp
-						index++;								// increment index
-						std::cout << result << std::endl;
-					}
-					std::cout << line << std::endl;
-					if (i != 3)									// goes to the next line, not needed for last row of matrix
-						std::getline(file, line);
-				}
 				glm::mat4 worldIn =								// makes a temp matrix of our data input
 				{
-					worldData[0], worldData[1], worldData[2], worldData[3],
-					worldData[4], worldData[5], worldData[6], worldData[7],
-					worldData[8], worldData[9], worldData[10], worldData[11],
-					worldData[12], worldData[13], worldData[14], worldData[15],
+					worldData.data[0], worldData.data[1], worldData.data[2], worldData.data[3],
+					worldData.data[4], worldData.data[5], worldData.data[6], worldData.data[7],
+					worldData.data[8], worldData.data[9], worldData.data[10], worldData.data[11],
+					worldData.data[12], worldData.data[13], worldData.data[14], worldData.data[15],
 				};
-				//glm::mat4 worldIn =								// makes a temp matrix of our data input
-				//{
-				//	worldData[0], worldData[2], -worldData[1], worldData[3],
-				//	worldData[4], worldData[6], -worldData[5], worldData[7],
-				//	worldData[8], worldData[10], -worldData[9], worldData[11],
-				//	worldData[12], worldData[14], -worldData[13], worldData[15],
-				//};
-				
-				//glm::transpose(worldIn);
-				
-				//worldIn = glm::rotate(worldIn, float(180.0f * (M_PI / 180.0f)), glm::vec3(1.0f, 0.0f, 0.0f));
 
 				worldMatrix.push_back(worldIn);					// push matrix to our vector
 				modelCount++;
+			}
+			else if (line == "LIGHT")
+			{
+				WorldMatrix worldData{};
+				PointLight light{};
+
+				std::cout << line << std::endl;
+				std::getline(file, line);
+				std::cout << line << std::endl;
+				std::getline(file, line);						// get first line of matrix
+
+				worldData = ExtractMatrix(file, line);
+
+				light.pos = glm::vec3{ worldData.data[12], worldData.data[13], worldData.data[14] };
+
+				glm::vec3 flame = { 226.0f / 255.0f, 88.0f / 255.0f, 34.0f / 255.0f };
+
+				light.ambient = flame / 16.0f;
+				light.diffuse = flame;
+				light.specular = {1.0f, 1.0f, 1.0f};
+
+				light.cons = 1.0f;
+				light.line = 0.09f;
+				light.quad = 0.032f;
+
+				lights.push_back(light);
 			}
 			std::cout << line << std::endl;
 
@@ -309,6 +309,49 @@ glm::vec3 Level_Data::vectorConvert(H2B::VECTOR _in)
 	temp.z = _in.z;
 
 	return temp;
+}
+
+WorldMatrix Level_Data::ExtractMatrix(std::fstream &_file, std::string _line)
+{
+	WorldMatrix worldIn{};
+
+	int index = 0;
+
+	for (int i = 0; i < 4; i++)
+	{
+		_line.erase(0, 13);								// trim matrix to fit
+
+		size_t check = _line.find_first_not_of(' ');
+
+		if (check != 0)
+			_line.erase(0, check);
+
+		check = _line.find_last_of(')');
+		_line.erase(check, _line.size() - 1);
+
+		//if (i != 3)
+		//	line.erase(31, 1);
+		//else
+		//	line.erase(31, 2);
+
+		std::stringstream temp(_line);					// create a string stream to go through current line
+		while (temp.good())
+		{
+			std::string result;
+			getline(temp, result, ',');					// gets each number deliminated by comma
+			check = result.find_first_not_of(' ');
+			if (check != 0)
+				result.erase(0, check);					// trims off excess whitesspace from number
+
+			worldIn.data[index] = std::stof(result);	// set the number to out local temp
+			index++;									// increment index
+		}
+		std::cout << _line << std::endl;
+		if (i != 3)										// goes to the next line, not needed for last row of matrix
+			std::getline(_file, _line);
+	}
+
+	return worldIn;
 }
 
 unsigned int Level_Data::getModelIndex(std::string _in)

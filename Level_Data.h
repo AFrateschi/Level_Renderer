@@ -198,22 +198,6 @@ void Level_Data::loadLevel(std::string _in)
 
 				light.specular = ExtractLightVec(file, line);
 
-				//glm::vec3 flame = { 226.0f / 255.0f, 88.0f / 255.0f, 34.0f / 255.0f };
-
-				//light.ambient = flame / 16.0f;
-				//light.diffuse = flame;
-				//light.specular = { 1.0f, 1.0f, 1.0f };
-
-				/*
-				light.ambient = { 0.05f, 0.05f, 0.05f };
-				light.diffuse = { 0.8f, 0.8f, 0.8f };
-				light.specular = { 1.0f, 1.0f, 1.0f };
-				*/
-
-				//light.cons = 0.5f;
-				//light.line = 0.09f;
-				//light.quad = 0.032f;
-
 				lights.push_back(light);
 			}
 			std::cout << line << std::endl;

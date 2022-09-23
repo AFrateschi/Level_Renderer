@@ -30,7 +30,7 @@ int main()
 	{
 		
 		win.SetWindowName("Andrew Frateschi Renderer Project");
-		float clr[] = { 25/255.0f, 25/255.0f, 25/255.0f, 1 }; // TODO: Part 1a { 48/255.0f, 90/255.0f, 150/255.0f, 1 }
+		float clr[] = { 25/255.0f, 25/255.0f, 25/255.0f, 1 }; //{ 48/255.0f, 90/255.0f, 150/255.0f, 1 }
 		msgs.Create([&](const GW::GEvent& e) {
 			GW::SYSTEM::GWindow::Events q;
 			if (+e.Read(q) && q == GWindow::Events::RESIZE)
@@ -42,7 +42,6 @@ int main()
 			Renderer renderer(win, ogl);
 			while (+win.ProcessWindowEvents())
 			{
-				// TODO: Part 4b
 				renderer.UpdateCamera();
 				glClearColor(clr[0], clr[1], clr[2], clr[3]);
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

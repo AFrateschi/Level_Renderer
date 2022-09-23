@@ -7,12 +7,12 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/transform.hpp>
 #include "Level_Data.h"
-#define PLIGHT_COUNT 5
+#define PLIGHT_COUNT 6
 
 const char* vertexShaderSource = R"(
 #version 420 // GLSL 3.30
 // an ultra simple glsl vertex shader
-#define PLIGHT_COUNT 5
+#define PLIGHT_COUNT 6
 struct OBJ_ATTRIBUTES
 {
 	vec3		Kd;			// diffuse reflectivity
@@ -68,7 +68,7 @@ void main()
 const char* fragmentShaderSource = R"(
 #version 420 // GLSL 3.30
 // an ultra simple glsl fragment shader
-#define PLIGHT_COUNT 5
+#define PLIGHT_COUNT 6
 struct OBJ_ATTRIBUTES
 {
 	vec3		Kd;			// diffuse reflectivity
@@ -93,8 +93,6 @@ struct PointLight
 	vec3 specular;
 	float padding;
 };
-
-#define PLIGHT_COUNT 5
 
 layout(std140, binding = 0) uniform UBO_DATA
 {
@@ -162,15 +160,7 @@ void MessageCallback(GLenum source, GLenum type, GLuint id,
 		(type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : ""), type, severity, message);
 }
 #endif
-/*
-struct UBO_DATA
-{
-	glm::vec4 sunDirection, sunColor;
-	glm::mat4 PVM;
-	MyAttrib material;
-	glm::vec3 viewPos;
-};
-*/
+
 struct UBO_DATA
 {
 	glm::mat4 model;
@@ -185,7 +175,6 @@ struct UBO_DATA
 // Creation, Rendering & Cleanup
 class Renderer
 {
-
 	// proxy handles
 	GW::SYSTEM::GWindow win;
 	GW::GRAPHICS::GOpenGLSurface ogl;
@@ -225,6 +214,7 @@ public:
 		FloorTest
 		AssetTest
 		Collapse
+		CollapseColorTest
 		*/
 		LevelData.loadLevel("Collapse");
 

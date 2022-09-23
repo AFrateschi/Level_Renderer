@@ -16,5 +16,5 @@ if (UNIX AND NOT APPLE)
      link_libraries(${OPENGL_LIBRARIES})
 endif()
 
-add_executable (Assignment_1_OpenGL main.cpp renderer.h)
+add_executable (Andrew_Frateschi_Renderer_OpenGL main.cpp renderer.h Level_Data.h)
 

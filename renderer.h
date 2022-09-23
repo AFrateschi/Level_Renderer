@@ -1,11 +1,11 @@
 // minimalistic code to draw a single triangle, this is not part of the API.
 // Simple Vertex Shader
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/vector_angle.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm/glm.hpp"
+#include "glm/glm/gtc/matrix_transform.hpp"
+#include "glm/glm/gtc/type_ptr.hpp"
+#include "glm/glm/gtx/rotate_vector.hpp"
+#include "glm/glm/gtx/vector_angle.hpp"
+#include "glm/glm/gtx/transform.hpp"
 #include "Level_Data.h"
 #define PLIGHT_COUNT 6
 

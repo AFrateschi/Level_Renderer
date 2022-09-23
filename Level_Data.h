@@ -1,10 +1,10 @@
 #pragma once
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/vector_angle.hpp>
-#include <glm/gtx/transform.hpp>
+#include "glm/glm/glm.hpp"
+#include "glm/glm/gtc/matrix_transform.hpp"
+#include "glm/glm/gtc/type_ptr.hpp"
+#include "glm/glm/gtx/rotate_vector.hpp"
+#include "glm/glm/gtx/vector_angle.hpp"
+#include "glm/glm/gtx/transform.hpp"
 #include <fstream>
 #include <vector>
 #include <string>
@@ -33,19 +33,6 @@ struct MyVertex
 };
 struct MyBatch
 {
-	/*
-		TODO:
-
-		make my own batch that handles index count, index offset, material index, model name
-			-index count comes directly from parse.batch.indexcount
-			-index offset will be current index count before adding incoming index count
-			-once complete meshes and batches will no longer be needed
-
-		figure out what is going on with world matrix
-			-I think it's a matter of columns and rows being different between opengl and blender
-			-answer might be to transpose incoming matrix before adding it to the vector
-
-	*/
 	unsigned int indexCount;
 	unsigned int indexOffset;
 	unsigned int materialIndex;
@@ -103,7 +90,7 @@ public:
 	std::vector<std::string> model;
 	std::vector<std::string> uniqueModel;
 	//std::vector<MODELDATA> modelData;
-	unsigned int uniqueModelCount;				// count of unique models
+	unsigned int uniqueModelCount = 0;				// count of unique models
 	unsigned int modelCount = 0;					// total number of models
 
 	unsigned int vertexCount = 0;			// move to level data
